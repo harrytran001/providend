@@ -1,6 +1,7 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    # Postgres 17 with pg_uuidv7 pre-installed; use CREATE EXTENSION in migrations
+    image: ghcr.io/fboulnois/pg_uuidv7:1.7.0
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

@@ -22,12 +22,22 @@ pnpm install
 docker compose up -d --build
 ```
 
-- **PostgreSQL**: data in volume `pgdata`
+- **PostgreSQL**: Postgres 17 with [pg_uuidv7](https://github.com/fboulnois/pg_uuidv7) (time-ordered UUIDv7 for primary keys); data in volume `pgdata`
 - **PgBouncer**: port `6432` (app connects here)
 - **Redis**: port `6379`, data in volume `redisdata`
 - **Backend**: http://localhost:4000
 
-### 2. Run the frontend (and test BE → FE)
+### 2. Run DB migration (for Notes feature)
+
+Start Docker first (step 1). When running the migration **on your machine**, the app connects via PgBouncer (Postgres is not exposed to the host). Set DB env then run:
+
+```bash
+PGHOST=localhost PGPORT=6432 PGDATABASE=providend PGUSER=postgres PGPASSWORD=postgres pnpm migrate
+```
+
+Or from `backend/`: same env vars, then `pnpm migrate`. This creates `clients`, `notes`, `client_assignments` and seeds two clients + assignments. If you previously used the default Postgres image, remove the `pgdata` volume and run again so the new image (Postgres 17 + pg_uuidv7) starts clean.
+
+### 3. Run the frontend (and test BE → FE)
 
 From the repo root:
 
@@ -37,9 +47,9 @@ pnpm dev:frontend
 
 Or from the frontend folder: `cd frontend && pnpm dev`.
 
-Open **http://localhost:5173**. The page calls `GET /api/hello` (proxied to the backend). If you see JSON with `"Hello from Providend API"`, the stack is working.
+Open **http://localhost:5173**. The app shows **Notes**: pick a client, list/add notes. Mock auth: switch “Logged in as” to **user-1** (assigned to both clients) or **user-2** (Acme only) to test the assignment check.
 
-### 3. Run backend tests (optional)
+### 4. Run backend tests (optional)
 
 From the repo root:
 
@@ -60,11 +70,12 @@ Or from the backend folder: `cd backend && pnpm test`.
 | `docker/` | PgBouncer config |
 | `docker-compose.yml` | Postgres, PgBouncer, Redis, backend |
 
-## Sample endpoint (BE → FE)
+## Notes feature (assignment + real DB)
 
-- **Backend**: `GET http://localhost:4000/api/hello`  
-  Response: `{ message, timestamp, environment }`
-- **Frontend**: Vite dev server proxies `/api` to the backend; the app fetches `/api/hello` and displays the JSON.
+- **Data model**: Client (id, name), Note (id, clientId, authorId, content, createdAt). “Assignment” (who can act on which client) is in `client_assignments`.
+- **API**: `GET /api/clients` (list), `GET /api/clients/:clientId/notes` (list notes; requires `X-Author-Id` and assignment), `POST /api/clients/:clientId/notes` (body `{ content }`; same auth).
+- **Mock auth**: Backend reads `X-Author-Id` (default `user-1`). Frontend sends it and lets you switch user to test 403 when not assigned.
+- **Run migration once**: `pnpm --filter providend-backend migrate` (after DB is up).
 
 ## Env (backend in Docker)
 

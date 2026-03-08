@@ -7,6 +7,7 @@ module.exports = {
   modulePathIgnorePatterns: ['<rootDir>/dist/'],
   testTimeout: 15_000,
   verbose: true,
+  setupFiles: ['<rootDir>/e2e/setup.ts'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.e2e.json' }],
   },

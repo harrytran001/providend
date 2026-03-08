@@ -10,6 +10,7 @@
     "build:frontend": "pnpm --filter providend-frontend build",
     "test:backend": "pnpm --filter providend-backend test",
     "test:e2e": "pnpm --filter providend-backend test:e2e",
+    "migrate": "pnpm --filter providend-backend migrate",
     "start:backend": "pnpm --filter providend-backend start"
   }
 }
