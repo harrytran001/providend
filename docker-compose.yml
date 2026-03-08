@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: providend
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d providend"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app
+
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.25.1-p0
+    volumes:
+      - ./docker/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./docker/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 6432 || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "6432:6432"
+    networks:
+      - app
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "6379:6379"
+    networks:
+      - app
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      PGHOST: pgbouncer
+      PGPORT: "6432"
+      PGDATABASE: providend
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      FRONTEND_ORIGIN: http://localhost:5173
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+    networks:
+      - app
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  app:
+    driver: bridge
