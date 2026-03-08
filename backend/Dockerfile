@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
@@ -8,7 +8,7 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN pnpm run build
 
-FROM node:20-alpine
+FROM node:25-alpine
 
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
