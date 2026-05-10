@@ -1,4 +1,4 @@
-FROM node:25-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 RUN npm install -g pnpm@9.15.0
@@ -8,7 +8,7 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN pnpm run build
 
-FROM node:25-alpine
+FROM node:26-alpine
 
 WORKDIR /app
 RUN npm install -g pnpm@9.15.0
